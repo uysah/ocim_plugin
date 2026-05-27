@@ -10,27 +10,19 @@ from ocelescope import (
 )
 
 
-class MinimalResource(Resource):
-    label = "Minimal Resource"
-    description = "A minimal resource"
-
-    def visualize(self):
-        pass
+from .resource import ProcessTree
+from .util import discover_ocim,build_test_process_tree
 
 
-class Input(PluginInput):
-    pass
 
+class OCIM(Plugin):
+    label = "Object-Centric Inductive Miner"
+    description = "Discover Object-Centric Process Models with Inductive Miner"
+    version = "1.0"
 
-class PluginTemplate(Plugin):  # Rename me
-    label = "Minimal Plugin"
-    description = "A ocelescope plugin"
-    version = "0.1.0"
-
-    @plugin_method(label="Example Method", description="An example plugin method")
+    @plugin_method(label="Object-Centric Process Tree", description="Discover Object-Centric Process Tree with Inductive Miner")
     def example(
         self,
         ocel: Annotated[OCEL, OCELAnnotation(label="Event Log")],
-        input: Input,
-    ) -> MinimalResource:
-        return MinimalResource()
+    ) -> ProcessTree:
+        return build_test_process_tree(ocel)

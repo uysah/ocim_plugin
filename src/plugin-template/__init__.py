@@ -1,3 +1,3 @@
-from .plugin import PluginTemplate
+from .plugin import OCIM
 
-__all__ = ["PluginTemplate"]
+__all__ = ["OCIM"]
