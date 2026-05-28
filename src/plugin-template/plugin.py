@@ -11,7 +11,7 @@ from ocelescope import (
 
 
 from .resource import ProcessTree
-from .util import discover_ocim,build_test_process_tree
+from .util.util import build_test_process_tree
 
 
 
