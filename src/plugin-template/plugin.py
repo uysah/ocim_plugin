@@ -11,7 +11,7 @@ from ocelescope import (
 
 
 from .resource import ProcessTree
-from .util.util import build_test_process_tree
+from .util.util import build_test_process_tree, apply_ocim 
 
 
 
@@ -25,4 +25,4 @@ class OCIM(Plugin):
         self,
         ocel: Annotated[OCEL, OCELAnnotation(label="Event Log")],
     ) -> ProcessTree:
-        return build_test_process_tree(ocel)
+        return apply_ocim(ocel)

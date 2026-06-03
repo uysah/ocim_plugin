@@ -5,9 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "more-itertools>=11.1.0",
     "ocelescope",
+    "scipy>=1.17.1",
+    "scikit-learn",
 ]
 
 
 [tool.uv.sources]
-ocelescope = { git = "https://github.com/promi4s/ocelescope.git", subdirectory = "src/ocelescope" }
+ocelescope = { git = "https://github.com/promi4s/ocelescope.git", branch = "feat/8-models-in-base-tool", subdirectory = "src/ocelescope" }
+

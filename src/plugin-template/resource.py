@@ -1,18 +1,20 @@
 from typing import Literal, Union
 from pydantic import BaseModel, Field
-from ocelescope import (Resource, Graph, GraphNode, GraphEdge, GraphvizLayoutConfig, generate_color_map,)
+from ocelescope import (Resource, Graph, GraphNode, GraphEdge, GraphvizLayoutConfig, generate_color_map)
 import uuid
-
-
-Operation = Literal[
-    "->",
-    "X",
-    "||",
-    "loop",
-]
+from enum import Enum
 
 mul_obj = Literal['0', '0...1', '1', "1...n", '0...n']
 mul_ev = Literal['0', '1','0...n']
+
+
+class Operator(Enum):
+    SEQUENCE = '->'
+    XOR = 'X'
+    PARALLEL = '||'
+    LOOP = '*'
+    OR = 'O'
+
 
 
 class TreeNode(BaseModel):
@@ -20,28 +22,59 @@ class TreeNode(BaseModel):
 
 class ObjectTypeNode(TreeNode):
     object_type: str
-    mul_eve: mul_obj 
-    mul_obj: mul_ev
 
 class LeafNode(TreeNode):
     activity: str
-    children_object: list[ObjectTypeNode] = Field(default_factory=list)
+    related: set[str] = Field(default_factory=set)
+    divergent: set[str] = Field(default_factory=set)
+    convergent: set[str] = Field(default_factory=set)
+    deficient: set[str] = Field(default_factory=set)
 
+    def get_type_information(self):
+        return {(self.activity,"rel"):self.related, (self.activity,"div"):self.divergent,
+                (self.activity,"con"):self.convergent, (self.activity,"def"):self.deficient}
+
+    def get_object_types(self):
+        return set(sum([list(value) for value in self.get_type_information().values()],[]))
+
+    def get_object_type_nodes(self) -> list[tuple["ObjectTypeNode", str]]:
+        type_info = self.get_type_information()
+
+        category_map: dict[str, list[str]] = {}
+        for (activity, category), object_types in type_info.items():
+            for ot in object_types:
+                category_map.setdefault(ot, []).append(category)
+
+        result = []
+        for ot, categories in category_map.items():
+            label = " + ".join(c for c in categories if c != "rel")
+            result.append((ObjectTypeNode(object_type=ot), label))
+        return result
 
 class OperationNode(TreeNode):
-    operator: Operation
+    operator: Operator
     children: list["ProcessNode"] = Field(default_factory=list)
 
 
-ProcessNode = Union[LeafNode, OperationNode,ObjectTypeNode]
+ProcessNode = Union[LeafNode, OperationNode]
 
 
 class ProcessTree(Resource):
 
-    label = "Process Tree"
-    description = "Object-centric process tree"
+    label = "Object-centric Process Tree"
+    description = "Object-centric Process Tree"
 
     root: ProcessNode
+
+    def _collect_object_types(self, node: ProcessNode) -> set[str]:
+        if isinstance(node, LeafNode):
+            return node.get_object_types()
+        elif isinstance(node, OperationNode):
+            result = set()
+            for child in node.children:
+                result |= self._collect_object_types(child)
+            return result
+        return set()
 
     def _build_graph(
         self,
@@ -49,56 +82,57 @@ class ProcessTree(Resource):
         graph_nodes: list[GraphNode],
         graph_edges: list[GraphEdge],
         parent: str | None = None,
+        color_map: dict = {},
     ):
         if isinstance(node, LeafNode):
             graph_nodes.append(
                 GraphNode(
                     id=node.id,
-                    shape='rectangle',
-                    label=node.activity,
+                    shape='circle',
+                    label=node.activity if node.activity != "" else "τ",
                     color="#A3D5FF",
-                )  
+                )
             )
-            for child in node.children_object:
-                
-                graph_edges.append(
-                    GraphEdge(
-                        source=child.id,
-                        target=node.id,
-                        label=f"{child.mul_obj}:{child.mul_eve}"  
+            for ot_node, category_label in node.get_object_type_nodes():
+                graph_nodes.append(
+                    GraphNode(
+                        id=ot_node.id,
+                        shape='rectangle',
+                        label=ot_node.object_type,
+                        color=color_map.get(ot_node.object_type, "#EE2658"),
                     )
                 )
-                self._build_graph(child, graph_nodes, graph_edges, parent=node.id)
+                graph_edges.append(
+                    GraphEdge(
+                        source=ot_node.id,
+                        target=node.id,
+                        label=category_label if category_label else "",
+                    )
+                )
 
         elif isinstance(node, OperationNode):
             graph_nodes.append(
                 GraphNode(
                     id=node.id,
-                    shape='rectangle',
-                    label=node.operator,
+                    shape='circle',
+                    label=node.operator.value,
                     color="#FFD580",
                 )
             )
             for child in node.children:
-                self._build_graph(child, graph_nodes, graph_edges, parent=node.id)
+                self._build_graph(child, graph_nodes, graph_edges, parent=node.id, color_map=color_map)
 
-        elif isinstance(node,ObjectTypeNode):
-            graph_nodes.append(
-                GraphNode(
-                id=node.id,
-                shape="circle",
-                label=node.object_type,
-                color="#EE2658",
-                )
-            )
-
-        if parent is not None and not isinstance(node, ObjectTypeNode):
+        if parent is not None:
             graph_edges.append(GraphEdge(source=node.id, target=parent))
 
     def visualize(self) -> Graph:
         nodes: list[GraphNode] = []
         edges: list[GraphEdge] = []
-        self._build_graph(self.root, nodes, edges)
+
+        all_object_types = self._collect_object_types(self.root)
+        color_map = generate_color_map(list(all_object_types))
+
+        self._build_graph(self.root, nodes, edges, color_map=color_map)
 
         return Graph(
             type='graph',

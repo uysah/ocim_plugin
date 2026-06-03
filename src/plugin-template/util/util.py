@@ -1,272 +1,142 @@
 from ocelescope import OCEL
-from ..resource import ProcessTree, LeafNode, OperationNode,ObjectTypeNode
+from ..resource import ProcessTree, LeafNode, OperationNode, Operator
 from collections import defaultdict, Counter
 from typing import List
 from itertools import combinations
-from .dfg import * 
+from .common_data import * 
 from .interaction_patterns import *
-from .detect_tau import * 
-
-def object_centric_inductive_miner(ocel:OCEL) -> ProcessTree:
-
-    #-------------------------------------------------------
-    #                   local data
-    #-------------------------------------------------------
-    activities = list(ocel.e2o.df["ocel:activity"].unique())
-    object_types = list(ocel.e2o.df["ocel:type"].unique())
-    object_set = list(ocel.e2o.df['ocel:oid'].unique())
-
-    dfg = get_cummulative_directly_follows_relation(ocel)
-    clos = get_transitive_closure_follows_relation(ocel)
-    
-
-    #-------------------------------------------------------
-    #                   global data
-    #-------------------------------------------------------
-    div, con, rel, defi = get_interaction_patterns(ocel)
+from .tau_cases import * 
+from .log_splitting import *
+from .cut_detection import *
+import pm4py
+from pm4py.objects.ocel.obj import OCEL as PM4PYOCEL
+from .fallthrough_detection import *
 
 
-    partition, operator = detect_tau_cases(activities,rel,clos,object_types,dfg,div)
+def apply_ocim(ocel:OCEL) -> ProcessTree:
+
+    pm4py_ocel = PM4PYOCEL(
+        events=ocel.events.df,
+        objects=ocel.objects.df,
+        relations=ocel.e2o.df,
+    )
+
+    input_log = pm4py_ocel.relations
+
+    local_data = LocalData([input_log])
+    global_data = GlobalData([input_log])
+
+    result = object_centric_inductive_miner(local_data,global_data,)
+
+    return ProcessTree(root=result)
+
+def object_centric_inductive_miner(local_data, global_data,brute_force = False, noise = False):
+    partition, operator = detect_tau_cases(local_data,global_data)
 
     if operator:
-        pass
+        sublogs = split_log(local_data, partition,operator,global_data)
+        subtrees = [object_centric_inductive_miner(sublogs[0], global_data, brute_force, noise),
+            LeafNode(activity="",related=local_data.object_types,divergent=local_data.object_types,convergent=local_data.object_types,deficient=local_data.object_types,)]
+        return OperationNode(operator=operator,children=subtrees,)
+
+    if len(local_data.alphabet) == 1:
+
+        sizes = {ot:[log[log["ocel:type"] == ot].groupby("ocel:oid").apply(lambda frame: frame.shape[0]).max() > 1 for log in
+        local_data.oc_log_list if log[log["ocel:type"] == ot].shape[0]] for ot in global_data.related[local_data.alphabet[0]] }
+        loops = {ot for ot in global_data.related[local_data.alphabet[0]] if any(sizes[ot])}
+        loops = {ot for ot in loops if any([ot in global_data.related[a] and ot not in global_data.divergence[a]
+                            for a in local_data.alphabet])}
+        if loops:
+            return OperationNode(operator = Operator.LOOP,children=[LeafNode(activity=local_data.alphabet[0], related = global_data.related[local_data.alphabet[0]],
+                            divergent=(global_data.divergence[local_data.alphabet[0]]),
+                            convergent=global_data.convergence[local_data.alphabet[0]],
+                            deficient= global_data.deficiency[local_data.alphabet[0]]),
+                LeafNode(activity="",related=local_data.object_types,divergent=local_data.object_types,convergent=local_data.object_types,deficient=local_data.object_types,)])
+        else:
+            return LeafNode(activity=local_data.alphabet[0], related = global_data.related[local_data.alphabet[0]],
+                            divergent=(global_data.divergence[local_data.alphabet[0]]),
+                            convergent=global_data.convergence[local_data.alphabet[0]],
+                            deficient= global_data.deficiency[local_data.alphabet[0]])
+
+    partition, operator = find_strict_cut(local_data, global_data)
+
+    if operator is None:
+        if not brute_force:
+            partition, operator = detect_fallthrough_fitness_polynomial(local_data,global_data)
+        else:
+            partition, operator = detect_fallthrough_fitness_brute_force(local_data,global_data)
+
+    sublogs = split_log(local_data,partition,operator,global_data)
+    subtrees = [object_centric_inductive_miner(split_local_data, global_data,brute_force,noise) for split_local_data in sublogs]
+
+    return OperationNode(operator=operator, children=subtrees)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def discover_ocpt(ocel: OCEL) -> ProcessTree:
-#     """
-#     Discover a simplified object-centric process tree from an OCEL.
-#     """
-
-#     df = ocel.events.df.copy()
-#     activities = df["ocel:activity"].unique().tolist()
-    
-#     def build_object_nodes(activity,df,ocel:OCEL):
-
-#         object_nodes = []
-
-#         activity_events = df[df["ocel:activity"] == activity]["ocel:eid"].tolist()
-
-#         # ---------------------------------------------------------
-#         # all event-object relations for these events
-#         # ---------------------------------------------------------
-
-#         e2o = ocel.e2o.df
-
-#         related = e2o[e2o["ocel:eid"].isin(activity_events)]
-
-#         for ot in related["ocel:type"].unique():
-#             rel_ot = related[
-#                 related["ocel:type"] == ot
-#             ]
-
-#             objects_per_event = (
-#                 rel_ot
-#                 .groupby("ocel:eid")["ocel:oid"]
-#                 .nunique()
-#             )
-
-#             obj_counts = set(objects_per_event.tolist())
-
-#             events_per_object = (
-#                 rel_ot
-#                 .groupby("ocel:oid")["ocel:eid"]
-#                 .nunique()
-#             )
-
-#             eve_counts = set(events_per_object.tolist())
-#             def map_mul(values, kind="obj"):
-
-#                 if values == {0}:
-#                     return "0"
-
-#                 if values == {1}:
-#                     return "1"
-
-#                 if values == {0, 1}:
-#                     return "0...1"
-
-#                 has_zero = 0 in values
-#                 has_gt_one = any(v > 1 for v in values)
-
-#                 if kind == "eve":
-#                     if has_zero and has_gt_one:
-#                         return "0...n"
-                    
-#                     if not has_zero and has_gt_one:
-#                         return "1...n"
-
-#                 if kind == "obj" and has_gt_one:
-#                         return "0...n"
-                
-#                 return "0...n"
-
-#             mul_obj = map_mul(obj_counts, kind="obj")
-#             mul_eve = map_mul(eve_counts, kind="eve")
-
-#             object_nodes.append(
-#                 ObjectTypeNode(
-#                     object_type=ot,
-#                     mul_obj=mul_obj,
-#                     mul_eve=mul_eve,
-#                 )
-#     )
-#         return object_nodes
-
-#     leaf_nodes = []
-#     for act in activities:
-#         leaf_nodes.append(LeafNode(activity=act, children_object=build_object_nodes(act,df,ocel)))
-
-#     # -------------------------------
-#     # Step 4: Build simple sequence tree
-#     # -------------------------------
-#     if len(leaf_nodes) == 1:
-#         root = leaf_nodes[0]
-#     else:
-#         root = OperationNode(operator="->", children=leaf_nodes)
-
-#     return ProcessTree(root=root)
 
 def build_test_process_tree(ocel: OCEL) -> ProcessTree:
 
     root = OperationNode(
-        operator="->",
+        operator=Operator.SEQUENCE,
         children=[
-
-            # -------------------------------------------------
-            # Activity A
-            # -------------------------------------------------
 
             LeafNode(
                 activity="A",
-                children_object=[
-                    ObjectTypeNode(
-                        object_type="order",
-                        mul_eve="1",
-                        mul_obj="1",
-                    )
-                ],
+                related={"order"},
+                divergent=set(),
+                convergent={"order"},
+                deficient=set(),
             ),
 
-            # -------------------------------------------------
-            # XOR BLOCK
-            # -------------------------------------------------
-
             OperationNode(
-                operator="X",
+                operator=Operator.XOR,
                 children=[
 
                     LeafNode(
                         activity="B",
-                        children_object=[
-
-                            ObjectTypeNode(
-                                object_type="order",
-                                mul_eve="1",
-                                mul_obj="1",
-                            ),
-
-                            ObjectTypeNode(
-                                object_type="item",
-                                mul_eve="0...n",
-                                mul_obj="1",
-                            ),
-                        ],
+                        related={"order", "item"},
+                        divergent={"item"},
+                        convergent={"order"},
+                        deficient=set(),
                     ),
 
                     LeafNode(
                         activity="C",
-                        children_object=[
-
-                            ObjectTypeNode(
-                                object_type="order",
-                                mul_eve="1",
-                                mul_obj="1",
-                            ),
-
-                            ObjectTypeNode(
-                                object_type="item",
-                                mul_eve="0...n",
-                                mul_obj="1",
-                            ),
-                        ],
+                        related={"order", "item"},
+                        divergent={"item"},
+                        convergent={"order"},
+                        deficient=set(),
                     ),
                 ],
             ),
 
-            # -------------------------------------------------
-            # PARALLEL BLOCK
-            # -------------------------------------------------
-
             OperationNode(
-                operator="||",
+                operator=Operator.PARALLEL,
                 children=[
 
                     LeafNode(
                         activity="D",
-                        children_object=[
-
-                            ObjectTypeNode(
-                                object_type="order",
-                                mul_eve="1",
-                                mul_obj="1",
-                            ),
-
-                            ObjectTypeNode(
-                                object_type="employee",
-                                mul_eve="0",
-                                mul_obj="1",
-                            ),
-                        ],
+                        related={"order", "employee"},
+                        divergent={"employee"},
+                        convergent={"order"},
+                        deficient=set(),
                     ),
 
                     LeafNode(
                         activity="E",
-                        children_object=[
-
-                            ObjectTypeNode(
-                                object_type="order",
-                                mul_eve="1",
-                                mul_obj="1",
-                            ),
-
-                            ObjectTypeNode(
-                                object_type="employee",
-                                mul_eve="0",
-                                mul_obj="1",
-                            ),
-                        ],
+                        related={"order", "employee"},
+                        divergent={"employee"},
+                        convergent={"order"},
+                        deficient=set(),
                     ),
                 ],
             ),
 
-            # -------------------------------------------------
-            # Activity F
-            # -------------------------------------------------
-
             LeafNode(
                 activity="F",
-                children_object=[
-                    ObjectTypeNode(
-                        object_type="order",
-                        mul_eve="1",
-                        mul_obj="1",
-                    )
-                ],
+                related={"order"},
+                divergent=set(),
+                convergent={"order"},
+                deficient=set(),
             ),
         ],
     )

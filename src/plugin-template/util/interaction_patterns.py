@@ -1,16 +1,15 @@
 import pandas
-from ocelescope import OCEL
-import pm4py
-from pm4py.objects.ocel.obj import OCEL as PM4PYOCEL
 
-def get_interaction_patterns(ocel:OCEL):
-    pm4py_ocel = PM4PYOCEL(
-        events=ocel.events.df,
-        objects=ocel.objects.df,
-        relations=ocel.e2o.df,
-    )
-    relations = pm4py_ocel.relations
 
+""" Method to determine the interaction patters (convergence, divergence, deficiency) present in a given set of
+object-centric event logs (in the form of their summed up E2O relations). The code corresponds to the concepts
+from the preliminary Section 2.4 on object-centric event logs. Some optimization has been done, to avoid very
+expensive runtimes for the calculation of the divergence property. All three patterns are checked in one go. """
+
+
+def get_interaction_patterns(oc_log_list):
+
+    relations = pandas.concat(oc_log_list)
     convergent_object_types = {a: set() for a in relations["ocel:activity"].unique()}
     divergent_object_types = {a: set() for a in relations["ocel:activity"].unique()}
     deficient_object_types = {a: set() for a in relations["ocel:activity"].unique()}
