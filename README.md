@@ -1,8 +1,8 @@
-# Ocelescope Plugin Template
+# Object-Centric Inductive Miner Plugin 
 
-Use this repository as a starting point for writing an **Ocelescope** plugin.
+This repository implements a Plugin for **Ocelescope** to discover Object-Centric Petri Nets and Object-Centric Process Trees with the Object-Centric Inductive Miner. This Plugin uses the implementation by Niklas van Detten, which can be found [here](https://github.com/Nik314/OCIM)
 
-An Ocelescope plugin is a **Python module packaged as a `.zip`** archive. The plugin module must expose **exactly one** plugin class (your `Plugin` subclass) from its `__init__.py` entry point. Your plugin methods are regular class methods decorated with `@plugin_method`. Their type hints define inputs and outputs in the UI.  
+<!-- An Ocelescope plugin is a **Python module packaged as a `.zip`** archive. The plugin module must expose **exactly one** plugin class (your `Plugin` subclass) from its `__init__.py` entry point. Your plugin methods are regular class methods decorated with `@plugin_method`. Their type hints define inputs and outputs in the UI.  
 See the Ocelescope plugin docs for details.
 
 ## Requirements
@@ -90,4 +90,4 @@ git push origin v0.1.0
 
 - **Export exactly one plugin class.** Ocelescope expects a single plugin class exposed via `__init__.py`.
 - **Use relative imports inside the plugin.** Avoid absolute imports within your plugin package.
-- **Resources must be JSON-serializable.** Keep fields to standard JSON types (or Pydantic models).
+- **Resources must be JSON-serializable.** Keep fields to standard JSON types (or Pydantic models). -->
