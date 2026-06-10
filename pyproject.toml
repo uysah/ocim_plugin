@@ -1,7 +1,7 @@
 [project]
-name = "plugin-template"
+name = "OCIM"
 version = "0.1.0"
-description = "Add your description here"
+description = "Plugin for OCIM"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
