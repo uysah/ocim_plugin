@@ -13,5 +13,5 @@ dependencies = [
 
 
 [tool.uv.sources]
-ocelescope = { git = "https://github.com/promi4s/ocelescope.git", branch = "feat/8-models-in-base-tool", subdirectory = "src/ocelescope" }
+ocelescope = { git = "https://github.com/promi4s/ocelescope.git", subdirectory = "src/ocelescope" }
 

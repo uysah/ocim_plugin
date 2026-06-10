@@ -1,5 +1,5 @@
 from ocelescope import OCEL
-from ..resource import ProcessTree, LeafNode, OperationNode, Operator
+from ..resource import ProcessTree as OCProcessTree, LeafNode, OperationNode, Operator
 from collections import defaultdict, Counter
 from typing import List
 from itertools import combinations
@@ -13,7 +13,15 @@ from pm4py.objects.ocel.obj import OCEL as PM4PYOCEL
 from .fallthrough_detection import *
 
 
-def apply_ocim(ocel:OCEL) -> ProcessTree:
+
+# ============================================
+
+#        Object-Centric Process Tree
+
+# ============================================
+
+
+def apply_ocim(ocel:OCEL) -> OCProcessTree:
 
     pm4py_ocel = PM4PYOCEL(
         events=ocel.events.df,
@@ -28,7 +36,7 @@ def apply_ocim(ocel:OCEL) -> ProcessTree:
 
     result = object_centric_inductive_miner(local_data,global_data,)
 
-    return ProcessTree(root=result)
+    return OCProcessTree(root=result)
 
 def object_centric_inductive_miner(local_data, global_data,brute_force = False, noise = False):
     partition, operator = detect_tau_cases(local_data,global_data)
@@ -73,7 +81,7 @@ def object_centric_inductive_miner(local_data, global_data,brute_force = False, 
 
 
 
-def build_test_process_tree(ocel: OCEL) -> ProcessTree:
+def build_test_process_tree(ocel: OCEL) -> OCProcessTree:
 
     root = OperationNode(
         operator=Operator.SEQUENCE,
@@ -141,7 +149,93 @@ def build_test_process_tree(ocel: OCEL) -> ProcessTree:
         ],
     )
 
-    return ProcessTree(root=root)
+    return OCProcessTree(root=root)
 
 
+# ============================================
 
+#          Object-Centric Petri Net
+
+# ============================================
+
+from pm4py.objects.process_tree.obj import (
+    ProcessTree as PM4PyProcessTree,
+    Operator as PM4PyOperator
+    )
+from .ocpn_conversion import *
+from pm4py.objects.conversion.process_tree import converter as pt_converter
+from ocelescope.resource.default.petri_net import PetriNet,Place,Transition,Arc
+
+
+def convert_ocpn(ocel: OCEL) -> PetriNet:
+    ocpt = apply_ocim(ocel)
+    object_types = ocpt.root.get_object_types()
+
+    ocpn = PetriNet()
+
+    place_map = {}
+    transition_map = {}
+
+    for ot in object_types:
+        pt = project_ocpt(ocpt.root, ot)
+        print(ot)
+        print(pt)
+        net, im, fm = pt_converter.apply(pt)
+
+        place_ids = {id(p) for p in net.places}
+
+        #add places
+
+        for place in net.places:
+            oc_place = Place(
+                name=f"{ot}_{place.name}",
+                object_type=ot,
+            )
+            ocpn.add_place(oc_place)
+            place_map[(ot, id(place))] = oc_place
+
+        #add transitions
+
+        for transition in net.transitions:
+            if transition.label is None:
+                key = ("tau", transition.name)
+            else:
+                key = transition.label
+
+            if key not in transition_map:
+                oc_transition = Transition(
+                    name=str(key),
+                    label=transition.label,
+                )
+                ocpn.add_transition(oc_transition)
+                transition_map[key] = oc_transition
+
+        #add arcs
+
+        for arc in net.arcs:
+            if id(arc.source) in place_ids:
+                source = place_map[(ot, id(arc.source))]
+            else:
+                key = ("tau", arc.source.name) if arc.source.label is None else arc.source.label
+                source = transition_map[key]
+
+            if id(arc.target) in place_ids:
+                target = place_map[(ot, id(arc.target))]
+            else:
+                key = ("tau", arc.target.name) if arc.target.label is None else arc.target.label
+                target = transition_map[key]
+
+            oc_arc = Arc(source=source.name, target=target.name)
+            ocpn.add_arc(oc_arc)
+
+        #initial and final marking
+
+        for place, tokens in im.items():
+            oc_place = place_map[(ot, id(place))]
+            ocpn.initial_marking[oc_place.name] = tokens
+
+        for place, tokens in fm.items():
+            oc_place = place_map[(ot, id(place))]
+            ocpn.final_marking[oc_place.name] = tokens
+            
+    return ocpn
