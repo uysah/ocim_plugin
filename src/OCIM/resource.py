@@ -1,9 +1,7 @@
-from typing import Literal, Union
+from typing import Union
 from pydantic import BaseModel, Field
 from ocelescope import Resource, Graph, GraphNode, GraphEdge, LayoutConfig, generate_color_map
-from ocelescope.resource.default.petri_net import PetriNet, Place, Transition, Arc
 import uuid
-from enum import Enum
 from pm4py.objects.process_tree.obj import Operator
 
 
@@ -12,8 +10,6 @@ from pm4py.objects.process_tree.obj import Operator
 #        Object-Centric Process Tree
 
 # ============================================
-
-
 
 
 class TreeNode(BaseModel):

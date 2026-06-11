@@ -1,14 +1,10 @@
 from ocelescope import OCEL
 from ..resource import ProcessTree as OCProcessTree, LeafNode, OperationNode, Operator
-from collections import defaultdict, Counter
-from typing import List
-from itertools import combinations
 from .common_data import * 
 from .interaction_patterns import *
 from .tau_cases import * 
 from .log_splitting import *
 from .cut_detection import *
-import pm4py
 from pm4py.objects.ocel.obj import OCEL as PM4PYOCEL
 from .fallthrough_detection import *
 
