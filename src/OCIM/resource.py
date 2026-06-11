@@ -15,10 +15,6 @@ from pm4py.objects.process_tree.obj import Operator
 
 
 
-mul_obj = Literal['0', '0...1', '1', "1...n", '0...n']
-mul_ev = Literal['0', '1','0...n']
-
-
 
 class TreeNode(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -171,75 +167,3 @@ class ProcessTree(Resource):
                 }
             )
         )
-    
-
-# ============================================
-
-#          Object-Centric Petri Net
-
-# ============================================
-
-
-
-
-# class OCPetriNet(Resource):
-#     label = "Object-centric Petri Net"
-#     description = "Object-centric Petri Net"
-
-#     places: set[Place]
-#     transitions: list[Transition]
-#     arc: list[Arc]
-
-
-#     def visualize(self) -> Graph:
-#         ocpn = PetriNet()
-
-        # # Places
-        #ocpn.add_place(Place(name="p1", object_type="order"))
-        # ocpn.add_place(Place(name="p_order_mid", object_type="order"))
-        # ocpn.add_place(Place(name="p_order_end", object_type="order"))
-        # ocpn.add_place(Place(name="p_item_start", object_type="item"))
-        # ocpn.add_place(Place(name="p_item_end", object_type="item"))
-
-        # # Transitions
-        # ocpn.add_transition(Transition(name="place_order", label="place order"))
-        # ocpn.add_transition(Transition(name="pick_item", label="pick item"))
-        # ocpn.add_transition(Transition(name="ship", label="ship"))
-
-        # # Arcs
-        # ocpn.add_arc(Arc(source="place_order", target="p_order_mid"))
-        # ocpn.add_arc(Arc(source="p_order_mid", target="ship"))
-        # ocpn.add_arc(Arc(source="ship", target="p_order_end"))
-
-        # ocpn.add_arc(Arc(source="p_item_start", target="pick_item"))
-        # ocpn.add_arc(Arc(source="pick_item", target="p_item_end"))
-        # ocpn.add_arc(Arc(source="p_item_end", target="ship"))
-
-        # # Markings
-        # ocpn.initial_marking = {"p_order_start": 1, "p_item_start": 1}
-        # ocpn.final_marking = {"p_order_end": 1}
-
-        # return Graph(
-        #     type="graph",
-        #     nodes=[
-        #         GraphNode(
-        #             id="p1",
-        #             label="Place",
-        #             shape="circle",
-        #         ),
-        #         GraphNode(
-        #             id="t1",
-        #             label="Transition",
-        #             shape="rectangle",
-        #         ),
-        #     ],
-        #     edges=[
-        #         GraphEdge(
-        #             source="p1",
-        #             target="t1",
-        #         )
-        #     ],
-        #     layout_config=GraphvizLayoutConfig(
-        #         rankdir="LR"
-        #     ),
-        # )
