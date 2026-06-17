@@ -2,6 +2,11 @@
 
 This repository implements a Plugin for **Ocelescope** to discover Object-Centric Petri Nets and Object-Centric Process Trees with the Object-Centric Inductive Miner. This Plugin uses the implementation by Niklas van Detten, which can be found [here](https://github.com/Nik314/OCIM)
 
+# Known Issues
+
+- The ordering of children nodes are not yet considered, i.e., for **Sequence** and **Loop** Operators
+
+
 <!-- An Ocelescope plugin is a **Python module packaged as a `.zip`** archive. The plugin module must expose **exactly one** plugin class (your `Plugin` subclass) from its `__init__.py` entry point. Your plugin methods are regular class methods decorated with `@plugin_method`. Their type hints define inputs and outputs in the UI.  
 See the Ocelescope plugin docs for details.
 
