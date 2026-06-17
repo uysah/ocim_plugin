@@ -8,7 +8,7 @@ from .resource import ProcessTree
 from .util.util import apply_ocim, convert_ocpn
 
 @discovery_method(
-    name="Object-Centric Inductive Miner (Process Tree)",
+    name="Object-Centric Inductive Miner",
     description="Discover Object-Centric Process Tree with Inductive Miner",
 )
 def discover_ocpt(
@@ -18,7 +18,7 @@ def discover_ocpt(
 
 
 @discovery_method(
-    name="Object-Centric Inductive Miner (Petri Net)",
+    name="Object-Centric Inductive Miner",
     description="Discover Object-Centric Petri Net with Inductive Miner",
 )
 def discover_ocpn(
