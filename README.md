@@ -5,7 +5,7 @@ This repository contains an **Ocelescope plugin** for discovering **Object-Centr
 The plugin is based on the implementation by Niklas van Detten, available here:
 https://github.com/Nik314/OCIM
 
-## 🚀 Installation
+## 🚀 How to Upload
 
 1. Download the plugin `OCIM.zip` file from the `dist/` directory.
 2. Open **Ocelescope**.
