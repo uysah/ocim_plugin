@@ -7,11 +7,11 @@ https://github.com/Nik314/OCIM
 
 ## 🚀 Installation
 
-1. Download the plugin `.zip` file from the `dist/` directory.
+1. Download the plugin `OCIM.zip` file from the `dist/` directory.
 2. Open **Ocelescope**.
 3. Navigate to **Plugins**.
 4. Click **Upload Plugin**.
-5. Drag and drop the downloaded `.zip` file into the upload area.
+5. Drag and drop the downloaded `OCIM.zip` file into the upload area.
 6. Once the upload is complete, the plugin will be available in Ocelescope.
 
 ## 🎥 Demo Video
