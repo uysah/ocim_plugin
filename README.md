@@ -1,8 +1,11 @@
-# Object-Centric Inductive Miner Plugin 
+#  📦 Object-Centric Inductive Miner Plugin 
 
-This repository implements a Plugin for **Ocelescope** to discover Object-Centric Petri Nets and Object-Centric Process Trees with the Object-Centric Inductive Miner. This Plugin uses the implementation by Niklas van Detten, which can be found [here](https://github.com/Nik314/OCIM)
+This repository implements a Plugin for **Ocelescope** to discover Object-Centric Petri Nets and Object-Centric Process Trees with the Object-Centric Inductive Miner. The Plugin uses the implementation by Niklas van Detten, which can be found [here](https://github.com/Nik314/OCIM)
 
-# Known Issues
+
+
+
+<!-- # Known Issues -->
 
 <!-- - The ordering of children nodes are not yet considered, i.e., for **Sequence** and **Loop** Operators -->
 
