@@ -1,6 +1,6 @@
 from typing import Union
 from pydantic import BaseModel, Field
-from ocelescope import Resource, Graph, GraphNode, GraphEdge, LayoutConfig, generate_color_map
+from ocelescope import Resource, Graph, GraphNode, GraphEdge, generate_color_map, ORDERED_TREE_LAYOUT, GraphvizLayoutConfig
 import uuid
 from pm4py.objects.process_tree.obj import Operator
 
@@ -45,7 +45,7 @@ class LeafNode(TreeNode):
             label = " + ".join(c for c in categories if c != "rel")
             result.append((ObjectTypeNode(object_type=ot), label))
         return result
-    
+
     def get_activities(self):
         return set(sum([[key[0]] for key in self.get_type_information().keys()],[]))
 
@@ -56,11 +56,10 @@ class OperationNode(TreeNode):
 
     def get_activities(self):
         return set(sum([[key[0]] for key in self.get_type_information().keys()],[]))
-    
+
     def get_object_types(self):
         return set(sum([list(value) for value in self.get_type_information().values()],[]))
-    
-    
+
     def get_type_information(self):
         return {key:value for subtree in self.children for key,value in subtree.get_type_information().items()}
 
@@ -97,15 +96,15 @@ class ProcessTree(Resource):
             graph_nodes.append(
                 GraphNode(
                     id=node.id,
-                    shape='circle',
+                    shape='rectangle',
                     label=label,
                     color="#A3D5FF",
-                    width=max(120, len(label) * 7),
+                    width=max(100, len(label) * 7),
                     height=40,
                 )
             )
             for ot_node, category_label in node.get_object_type_nodes():
-                ot_label = f"{ot_node.object_type} ({category_label})" if category_label else ot_node.object_type
+                ot_label = f"{ot_node.object_type}" if category_label else ot_node.object_type
                 graph_nodes.append(
                     GraphNode(
                         id=ot_node.id,
@@ -120,6 +119,7 @@ class ProcessTree(Resource):
                     GraphEdge(
                         source=node.id,
                         target=ot_node.id,
+                        label=category_label if category_label else "",
                     )
                 )
 
@@ -128,14 +128,20 @@ class ProcessTree(Resource):
                 GraphNode(
                     id=node.id,
                     shape='circle',
-                    label= "||" if node.operator.value == '+' else node.operator.value,
+                    label="||" if node.operator.value == '+' else node.operator.value,
                     color="#FFD580",
-                    width=30,
-                    height=30,
+                    width=35,
+                    height=35,
                 )
             )
             for child in node.children:
-                self._build_graph(child, graph_nodes, graph_edges, parent=node.id, color_map=color_map)
+                self._build_graph(
+                    child,
+                    graph_nodes,
+                    graph_edges,
+                    parent=node.id,
+                    color_map=color_map,
+                )
 
         if parent is not None:
             graph_edges.append(GraphEdge(source=parent, target=node.id))
@@ -148,18 +154,20 @@ class ProcessTree(Resource):
         color_map = generate_color_map(list(all_object_types))
 
         self._build_graph(self.root, nodes, edges, color_map=color_map)
+        for n in nodes:
+            print(n.id, n.label, n.width, n.height)
         return Graph(
             type='graph',
             nodes=nodes,
             edges=edges,
-            layout_config=LayoutConfig(
-                elk_options={
-                    "elk.algorithm": "mrtree",
-                    "elk.direction": "DOWN",
-                    "elk.spacing.nodeNode": 70,
-                    "elk.layered.spacing.nodeNodeBetweenLayers": 70,
-                    "elk.edgeLabels.inline": True,
-                    "elk.edgeLabels.placement": "CENTER",
-                }
+            layout_config=GraphvizLayoutConfig(
+                    engine="dot",
+                    graphAttrs={
+                        "ordering": "out",
+                        "rankdir": "TB",
+                        "nodesep": 0.5,
+                        "ranksep": 1.5,
+                        "splines": "line",
+                    },
+                )
             )
-        )

@@ -436,7 +436,7 @@ wheels = [
 [[package]]
 name = "ocelescope"
 version = "0.2.0"
-source = { git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope#1b0d18a6871a062634762c6fb8fe306f30f379f3" }
+source = { git = "https://github.com/promi4s/ocelescope.git?subdirectory=src%2Focelescope#1f29ce5b6461c907805363e223c728d94cae00f3" }
 dependencies = [
     { name = "cachetools" },
     { name = "graphviz" },
