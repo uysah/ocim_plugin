@@ -128,7 +128,7 @@ class ProcessTree(Resource):
                 GraphNode(
                     id=node.id,
                     shape='circle',
-                    label="||" if node.operator.value == '+' else node.operator.value,
+                    label = ("||" if node.operator.value == "+" else "↺" if node.operator.value == "*" else node.operator.value),
                     color="#FFD580",
                     width=35,
                     height=35,
@@ -154,8 +154,6 @@ class ProcessTree(Resource):
         color_map = generate_color_map(list(all_object_types))
 
         self._build_graph(self.root, nodes, edges, color_map=color_map)
-        for n in nodes:
-            print(n.id, n.label, n.width, n.height)
         return Graph(
             type='graph',
             nodes=nodes,
