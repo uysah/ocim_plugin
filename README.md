@@ -4,7 +4,7 @@ This repository implements a Plugin for **Ocelescope** to discover Object-Centri
 
 # Known Issues
 
-- The ordering of children nodes are not yet considered, i.e., for **Sequence** and **Loop** Operators
+<!-- - The ordering of children nodes are not yet considered, i.e., for **Sequence** and **Loop** Operators -->
 
 
 <!-- An Ocelescope plugin is a **Python module packaged as a `.zip`** archive. The plugin module must expose **exactly one** plugin class (your `Plugin` subclass) from its `__init__.py` entry point. Your plugin methods are regular class methods decorated with `@plugin_method`. Their type hints define inputs and outputs in the UI.  
