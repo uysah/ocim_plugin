@@ -3,7 +3,7 @@
 This repository contains an **Ocelescope plugin** for discovering **Object-Centric Petri Nets (OCPNs)** and **Object-Centric Process Trees (OCPTs)** using the **Object-Centric Inductive Miner (OCIM)**.
 
 The plugin is based on the implementation by Niklas van Detten, available here:
-https://github.com/Nik314/OCIM
+https://github.com/Nik314/OCIM [1]
 
 ## 🚀 How to Upload
 
@@ -17,3 +17,7 @@ https://github.com/Nik314/OCIM
 ## 🎥 Demo Video
 
 https://github.com/user-attachments/assets/2086cebc-520a-4e4a-8d22-42499575b607
+
+
+## 📚 References
+[1] Niklas van Detten, *Object-Centric Inductive Miner*. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5668513
