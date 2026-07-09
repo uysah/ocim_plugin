@@ -88,13 +88,14 @@ from pm4py.objects.process_tree.obj import (
     )
 from .ocpn_conversion import *
 from pm4py.objects.conversion.process_tree import converter as pt_converter
-from ocelescope.resource.default.petri_net import PetriNet,Place,Transition,Arc
+from ocelescope.resource.default.petri_net import PetriNet,Place,Transition,Arc, ArcType
 
 
 def convert_ocpn(ocel: OCEL) -> PetriNet:
     ocpt = apply_ocim(ocel)
-    object_types = ocpt.root.get_object_types()
+    object_types = ocpt._collect_object_types(ocpt.root)
 
+    conv_objects = ocpt.get_convergent_object_types_excluding_tau()
     ocpn = PetriNet()
 
     place_map = {}
@@ -102,8 +103,6 @@ def convert_ocpn(ocel: OCEL) -> PetriNet:
 
     for ot in object_types:
         pt = project_ocpt(ocpt.root, ot)
-        print(ot)
-        print(pt)
         net, im, fm = pt_converter.apply(pt)
 
         place_ids = {id(p) for p in net.places}
@@ -149,9 +148,20 @@ def convert_ocpn(ocel: OCEL) -> PetriNet:
                 key = ("tau", arc.target.name) if arc.target.label is None else arc.target.label
                 target = transition_map[key]
 
-            oc_arc = Arc(source=source.name, target=target.name)
-            ocpn.add_arc(oc_arc)
+            #get activity in preset or postset
+            activity = None
+            if id(arc.source) not in place_ids:
+                activity = arc.source.label
+            elif id(arc.target) not in place_ids:
+                activity = arc.target.label
 
+            is_variable = (activity is not None and (ot, activity) in conv_objects)
+            if is_variable:
+                oc_arc = Arc(source=source.name, target=target.name, type=ArcType.VARIABLE)
+            else:
+                oc_arc = Arc(source=source.name, target=target.name)
+
+            ocpn.add_arc(oc_arc)
         #initial and final marking
 
         for place, tokens in im.items():
@@ -160,6 +170,6 @@ def convert_ocpn(ocel: OCEL) -> PetriNet:
 
         for place, tokens in fm.items():
             oc_place = place_map[(ot, id(place))]
-            ocpn.final_marking[oc_place.name] = tokens
-            
+            ocpn.final_marking[oc_place.name] = tokens 
+
     return ocpn

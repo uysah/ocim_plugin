@@ -15,7 +15,7 @@ from .util.util import apply_ocim, convert_ocpn
 class OCIM(Plugin):
     label = "Object-Centric Inductive Miner Plugin"
     description = "Discover Object-Centric Process Models with Inductive Miner"
-    version = "1.0"
+    version = "1.0.1"
 
     @plugin_method(label="Object-Centric Process Tree", description="Discover Object-Centric Process Tree with Inductive Miner")
     def discover_ocpt(

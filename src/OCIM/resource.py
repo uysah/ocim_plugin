@@ -48,6 +48,11 @@ class LeafNode(TreeNode):
 
     def get_activities(self):
         return set(sum([[key[0]] for key in self.get_type_information().keys()],[]))
+    
+    def get_convergent_types_excluding_tau(self) -> set[tuple[str, str]]:
+        if self.activity == "":
+            return set()
+        return {(ot, self.activity) for ot in self.convergent}
 
 
 class OperationNode(TreeNode):
@@ -62,6 +67,12 @@ class OperationNode(TreeNode):
 
     def get_type_information(self):
         return {key:value for subtree in self.children for key,value in subtree.get_type_information().items()}
+    
+    def get_convergent_types_excluding_tau(self) -> set[tuple[str, str]]:
+        result: set[tuple[str, str]] = set()
+        for child in self.children:
+            result |= child.get_convergent_types_excluding_tau()
+        return result
 
 ProcessNode = Union[LeafNode, OperationNode]
 
@@ -82,6 +93,9 @@ class ProcessTree(Resource):
                 result |= self._collect_object_types(child)
             return result
         return set()
+
+    def get_convergent_object_types_excluding_tau(self) -> set[tuple[str, str]]:
+        return self.root.get_convergent_types_excluding_tau()
 
     def _build_graph(
         self,
