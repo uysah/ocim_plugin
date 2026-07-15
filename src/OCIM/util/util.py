@@ -82,10 +82,6 @@ def object_centric_inductive_miner(local_data, global_data,brute_force = False, 
 
 # ============================================
 
-from pm4py.objects.process_tree.obj import (
-    ProcessTree as PM4PyProcessTree,
-    Operator as PM4PyOperator
-    )
 from .ocpn_conversion import *
 from pm4py.objects.conversion.process_tree import converter as pt_converter
 from ocelescope.resource.default.petri_net import PetriNet,Place,Transition,Arc, ArcType
@@ -102,7 +98,7 @@ def convert_ocpn(ocel: OCEL) -> PetriNet:
     transition_map = {}
 
     for ot in object_types:
-        pt = project_ocpt(ocpt.root, ot)
+        pt = project_ocpt(ocpt.root, ot, ocel)
         net, im, fm = pt_converter.apply(pt)
         place_ids = {id(p) for p in net.places}
 
