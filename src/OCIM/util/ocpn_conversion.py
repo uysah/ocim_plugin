@@ -25,7 +25,15 @@ def project_ocpt(ocpt,object_type):
             [ProcessTree(label=a) for a in related_activities])])
 
     else:
-        if ocpt.operator == Operator.PARALLEL or ocpt.operator == Operator.LOOP:
+        if ocpt.operator == Operator.PARALLEL:
+            projected_children = [project_ocpt(sub, object_type) for sub in ocpt.children]
+            non_empty_children = [c for c in projected_children if not _is_empty_tree(c)]
+            if not non_empty_children:
+                return ProcessTree()
+            if len(non_empty_children) == 1:
+                return non_empty_children[0]
+            return ProcessTree(operator=Operator.PARALLEL, children=non_empty_children)
+        if ocpt.operator == Operator.LOOP:
             return ProcessTree(operator=ocpt.operator,children=[project_ocpt(sub,object_type) for sub in ocpt.children])
 
         diverging = [i for i in range(len(ocpt.children)) if ocpt.children[i].get_activities() & related_activities
@@ -106,3 +114,7 @@ def handle_deficiency(ocpt):
             return OperationNode(operator=Operator.XOR,children=children), [ocpt.activity]
         else:
             return ocpt,[]
+        
+
+def _is_empty_tree(pt):
+    return pt.operator is None and pt.label is None and len(pt.children) == 0

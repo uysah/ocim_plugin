@@ -104,7 +104,6 @@ def convert_ocpn(ocel: OCEL) -> PetriNet:
     for ot in object_types:
         pt = project_ocpt(ocpt.root, ot)
         net, im, fm = pt_converter.apply(pt)
-
         place_ids = {id(p) for p in net.places}
 
         #add places
