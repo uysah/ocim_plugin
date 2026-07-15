@@ -122,10 +122,12 @@ def make_loop(pt: ProcessTree, activity: str, object_type: str, ocel: OCEL):
             children=[pt, ProcessTree()]
         )
 
-def activity_skip(act, otype, ocel:OCEL):
+def activity_skip(act, otype, ocel: OCEL):
     e2o = ocel.e2o.df
     e2o = e2o[e2o['ocel:type'] == otype]
-    variants = e2o.groupby('ocel:oid')['ocel:activity'].apply(list) 
+    variants = e2o.groupby('ocel:oid')['ocel:activity'].apply(list)
 
-    skippable = any(act not in activities for activities in variants)
+    acts = {act} if isinstance(act, str) else set(act)
+
+    skippable = any(not (acts & set(activities)) for activities in variants)
     return skippable
